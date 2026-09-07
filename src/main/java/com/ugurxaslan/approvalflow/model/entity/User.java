@@ -1,13 +1,12 @@
 package com.ugurxaslan.approvalflow.model.entity;
 
 
+import com.ugurxaslan.approvalflow.model.enums.DepartmentType;
 import com.ugurxaslan.approvalflow.model.enums.UserRole;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
 import java.util.HashSet;
-import java.util.List;
 import java.util.Set;
 
 @Entity
@@ -43,7 +42,7 @@ public class User extends BaseEntity {
 
     //relations
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "department_id")
-    private Department department;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "department_type", nullable = false, length = 50)
+    private DepartmentType departmentType;
 }
