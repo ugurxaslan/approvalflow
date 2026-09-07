@@ -32,20 +32,9 @@ public class ApprovalStep extends BaseEntity {
     @Column(name = "status", nullable = false)
     private StepStatus status;
 
-    @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(
-            name = "approval_step_target_roles",
-            joinColumns = @JoinColumn(name = "approval_step_id")
-    )
-    @Column(name = "target_role", nullable = false)
     @Enumerated(EnumType.STRING)
-    @Builder.Default
-    private Set<UserRole> targetRoles = new HashSet<>();
-
-    @Enumerated(EnumType.STRING)
-    @Column(name = "target_department",nullable = false)
-    private DepartmentType targetDepartment;
-
+    @Column(name = "required_role", nullable = false)
+    private UserRole requiredRole;
     //relations
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
@@ -53,7 +42,7 @@ public class ApprovalStep extends BaseEntity {
     private Request request;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "approver")
-    private User approver;
+    @JoinColumn(name = "assigned_approver")
+    private User assignedApprover;
 
 }
