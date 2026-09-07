@@ -3,9 +3,9 @@ spring:
     name: approvalflow
 
   datasource:
-    url: jdbc:postgresql://localhost:5432/approval_flow_db
-    username: postgres
-    password: postgrespassword
+    url: jdbc:postgresql://localhost:${POSTGRES_PORT}/${POSTGRES_DB}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
     driver-class-name: org.postgresql.Driver
 
   jpa:
