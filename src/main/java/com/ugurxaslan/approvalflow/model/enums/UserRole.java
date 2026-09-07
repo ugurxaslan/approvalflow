@@ -1,8 +1,10 @@
 package com.ugurxaslan.approvalflow.model.enums;
 
 public enum UserRole {
-    EMPLOYEE,
+    SOFTWARE_DEVELOPER,
     DEPARTMENT_MANAGER,
-    APPROVER,
+    HR_SPECIALIST,
+    IT_SPECIALIST,
+    FINANCE_SPECIALIST,
     ADMIN
 }
