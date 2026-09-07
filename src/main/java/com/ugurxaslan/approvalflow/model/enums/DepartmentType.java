@@ -1,8 +1,8 @@
 package com.ugurxaslan.approvalflow.model.enums;
 
 public enum DepartmentType {
-    HR,
+    HUMAN_RESOURCES,
     FINANCE,
-    IT,
+    INFORMATION_TECHNOLOGIES,
     SOFTWARE_DEVELOPMENT,
 }
