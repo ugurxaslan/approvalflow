@@ -34,10 +34,12 @@ public class Request extends BaseEntity {
     //relations
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
-    @JoinColumn(name = "requester_id", nullable = false)
-    private User requester;
+    @JoinColumn(name = "requested_by_id", nullable = false)
+    private User requested_by;
 
-    @OneToMany(mappedBy = "request", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OneToMany(
+            mappedBy = "request",
+            cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @OrderBy("stepOrder ASC")
     @Builder.Default
     private List<ApprovalStep> approvalSteps = new ArrayList<>();
