@@ -2,7 +2,7 @@ package com.ugurxaslan.approvalflow.model.enums;
 
 public enum RequestStatus {
     DRAFT,
-    PENDING,
+    IN_APPROVAL,
     APPROVED,
     REJECTED,
     CANCELLED
