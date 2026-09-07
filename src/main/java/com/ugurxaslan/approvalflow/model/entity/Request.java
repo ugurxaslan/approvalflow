@@ -35,7 +35,7 @@ public class Request extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "requested_by_id", nullable = false)
-    private User requested_by;
+    private User requestedBy;
 
     @OneToMany(
             mappedBy = "request",
