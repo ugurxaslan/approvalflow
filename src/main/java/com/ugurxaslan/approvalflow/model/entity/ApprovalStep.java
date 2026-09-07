@@ -40,7 +40,7 @@ public class ApprovalStep extends BaseEntity {
     private Request request;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "assigned_approver")
+    @JoinColumn(name = "assigned_approver_id")
     private User assignedApprover;
 
 }
