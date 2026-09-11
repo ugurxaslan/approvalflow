@@ -44,4 +44,7 @@ public class Request extends BaseEntity {
     @Builder.Default
     private List<ApprovalStep> approvalSteps = new ArrayList<>();
 
+    @OneToOne(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    private RequestDetail detail;
+
 }
