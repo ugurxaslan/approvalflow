@@ -60,3 +60,31 @@ Tüm Enum tanımları veritabanında `@Enumerated(EnumType.STRING)` olarak sakla
     * **`assignedApprover` (`@ManyToOne`):** Atanmış onaycı gösterilir.
     * **`request` (`@ManyToOne`):** Adımın bağlı olduğu ana talebi temsil eder (`request_id` foreign key).
 * **Tasarım Gerekçesi:** Sürecin kaç adımdan oluşacağını, hangi sırayla (`stepOrder`) ilerleyeceğini ve kimlerin onay yetkisine sahip olduğunu dinamik olarak yönetmeyi sağlar. 
+
+### Polimorfik Request DTO Mimarisi
+
+Uygulama, Jackson tabanlı polimorfik ayrıştırma (deserialization) mekanizması sayesinde farklı onay talebi türlerini tek bir ortak endpoint üzerinden dinamik olarak karşılar.
+
+#### Temel Tasarım
+- **`BaseRequestDTO`**: `requestType` özelliğine göre gelen JSON verisini ilgili alt sınıflara yönlendiren Jackson `@JsonTypeInfo` ve `@JsonSubTypes` yapılandırmasını barındıran soyut (abstract) temel sınıf.
+- **`GenericRequestDTO`**: Temel talep bilgilerinin dışında özel bir alana ihtiyaç duymayan türler (`SOFTWARE_LICENSE`, `TECHNICAL_SUPPORT`) için kullanılan ortak DTO.
+- **Alana Özgü DTO'lar**: İlgili tipe özel alanları ve Jakarta Validation kurallarını barındıran türler (`LeaveRequestDTO`, `SalaryAdvanceRequestDTO`).
+
+#### Eşlenen Talep Tipleri
+
+| Talep Tipi (`requestType`) | DTO Sınıfı | Özel Alanlar |
+| :--- | :--- | :--- |
+| `LEAVE` | `LeaveRequestDTO` | `startDate`, `endDate` |
+| `SALARY_ADVANCE` | `SalaryAdvanceRequestDTO` | `requestedAmount` |
+| `SOFTWARE_LICENSE` | `GenericRequestDTO` | *(Yok — BaseRequestDTO alanlarını kullanır)* |
+| `TECHNICAL_SUPPORT` | `GenericRequestDTO` | *(Yok — BaseRequestDTO alanlarını kullanır)* |
+
+#### Örnek JSON Verisi (`LEAVE`)
+```json
+{
+  "requestType": "LEAVE",
+  "title": "Yıllık İzin Talebi",
+  "description": "Yaz tatili için izin rica ediyorum.",
+  "startDate": "2026-07-10",
+  "endDate": "2026-07-20"
+}
