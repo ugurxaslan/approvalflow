@@ -47,4 +47,11 @@ public class Request extends BaseEntity {
     @OneToOne(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
     private RequestDetail detail;
 
+    public void setRequestDetail(RequestDetail detail) {
+        this.detail = detail;
+        if (detail != null) {
+            detail.setRequest(this);
+        }
+    }
+
 }
