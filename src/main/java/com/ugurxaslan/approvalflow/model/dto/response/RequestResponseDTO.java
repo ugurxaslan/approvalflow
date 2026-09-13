@@ -22,8 +22,8 @@ public class RequestResponseDTO {
     private String title;
     private String description;
 
-    private Long requestedBy;
+    private Long requestedById;
     private List<ApprovalStepResponseDTO> approvalSteps;
-    private RequestDetailDTO requestDetail;
+    private RequestDetailDTO detail;
 
 }
