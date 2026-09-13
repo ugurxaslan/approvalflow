@@ -1,6 +1,6 @@
 package com.ugurxaslan.approvalflow.model.dto.response;
 
-import com.ugurxaslan.approvalflow.model.dto.shared.BaseRequestDetailDTO;
+import com.ugurxaslan.approvalflow.model.dto.shared.RequestDetailDTO;
 import com.ugurxaslan.approvalflow.model.enums.RequestStatus;
 import com.ugurxaslan.approvalflow.model.enums.RequestType;
 import lombok.AllArgsConstructor;
@@ -24,6 +24,6 @@ public class RequestResponseDTO {
 
     private Long requestedBy;
     private List<ApprovalStepResponseDTO> approvalSteps;
-    private BaseRequestDetailDTO requestDetail;
+    private RequestDetailDTO requestDetail;
 
 }
