@@ -83,21 +83,22 @@ Tüm Enum tanımları veritabanında `@Enumerated(EnumType.STRING)` olarak sakla
 
 ### Polimorfik Request DTO Mimarisi
 
-Uygulama, Jackson tabanlı polimorfik ayrıştırma (deserialization) mekanizması sayesinde farklı onay talebi türlerini tek bir ortak endpoint üzerinden dinamik olarak karşılar.
+Uygulama, Jackson tabanlı polimorfik ayrıştırma (deserialization) mekanizması sayesinde farklı onay talebi türlerini tek bir ortak endpoint üzerinden dinamik olarak karşılar. Ana DTO yapısı (`RequestDTO`) üst seviye alanları tutarken, talebe özel detay verileri `BaseRequestDetailDTO` soyut sınıfı üzerinden polimorfik olarak kapsüllenir.
 
 #### Temel Tasarım
-- **`BaseRequestDTO`**: `requestType` özelliğine göre gelen JSON verisini ilgili alt sınıflara yönlendiren Jackson `@JsonTypeInfo` ve `@JsonSubTypes` yapılandırmasını barındıran soyut (abstract) temel sınıf.
-- **`GenericRequestDTO`**: Temel talep bilgilerinin dışında özel bir alana ihtiyaç duymayan türler (`SOFTWARE_LICENSE`, `TECHNICAL_SUPPORT`) için kullanılan ortak DTO.
-- **Alana Özgü DTO'lar**: İlgili tipe özel alanları ve Jakarta Validation kurallarını barındıran türler (`LeaveRequestDTO`, `SalaryAdvanceRequestDTO`).
+- **`RequestDTO`**: Ana istek gövdesini temsil eder. `requestType`, `title`, `description` gibi ortak bilgileri ve `@Valid` ile sarmalanmış polimorfik `detail` nesnesini barındırır.
+- **`BaseRequestDetailDTO`**: Jackson `@JsonTypeInfo` ve `@JsonSubTypes` anotasyonları ile yapılandırılmış soyut (abstract) detay sınıfıdır. İstek gövdesinde dış alan olarak gelen (`JsonTypeInfo.As.EXTERNAL_PROPERTY`) `requestType` değerine göre ilgili alt detay DTO sınıfına türetilir. Detay içermeyen istekler için varsayılan olarak `Void.class` eşlemesi kullanılır.
+- **Detay DTO'ları (`shared`)**: İlgili talep türüne özel alanları ve Jakarta Validation kurallarını (`@FutureOrPresent`, `@Positive` vb.) barındıran somut sınıflardır (`LeaveRequestDetailDTO`, `SalaryAdvanceRequestDetailDTO`).
+- **Yanıt DTO'ları (`response`)**: İstemciye dönülecek olan `RequestResponseDTO` ve `ApprovalStepResponseDTO` nesneleridir. Detay nesnesi yine `BaseRequestDetailDTO` üzerinden esnek bir şekilde sunulur.
 
-#### Eşlenen Talep Tipleri
+#### Eşlenen Talep ve Detay DTO Tipleri
 
-| Talep Tipi (`requestType`) | DTO Sınıfı | Özel Alanlar |
+| Talep Tipi (`requestType`) | Detay DTO Sınıfı (`detail`) | Özel Alanlar ve Doğrulama Kuralları |
 | :--- | :--- | :--- |
-| `LEAVE` | `LeaveRequestDTO` | `startDate`, `endDate` |
-| `SALARY_ADVANCE` | `SalaryAdvanceRequestDTO` | `requestedAmount` |
-| `SOFTWARE_LICENSE` | `GenericRequestDTO` | *(Yok — BaseRequestDTO alanlarını kullanır)* |
-| `TECHNICAL_SUPPORT` | `GenericRequestDTO` | *(Yok — BaseRequestDTO alanlarını kullanır)* |
+| `LEAVE` | `LeaveRequestDetailDTO` | `startDate` (Gelecek/Bugün), `endDate` (Gelecek/Bugün) |
+| `SALARY_ADVANCE` | `SalaryAdvanceRequestDetailDTO` | `amount` (Pozitif Değer) |
+| `SOFTWARE_LICENSE` | *(Yok — `null`)* | Detay nesnesi içermez (`detail: null`) |
+| `TECHNICAL_SUPPORT` | *(Yok — `null`)* | Detay nesnesi içermez (`detail: null`) |
 
 #### Örnek JSON Verisi (`LEAVE`)
 ```json
@@ -105,6 +106,8 @@ Uygulama, Jackson tabanlı polimorfik ayrıştırma (deserialization) mekanizmas
   "requestType": "LEAVE",
   "title": "Yıllık İzin Talebi",
   "description": "Yaz tatili için izin rica ediyorum.",
-  "startDate": "2026-07-10",
-  "endDate": "2026-07-20"
+  "detail": {
+    "startDate": "2026-07-10",
+    "endDate": "2026-07-20"
+  }
 }
