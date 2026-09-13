@@ -9,7 +9,7 @@ import java.time.LocalDate;
 
 @Getter
 @Setter
-public class LeaveRequestDetailDTO extends BaseRequestDetailDTO {
+public class LeaveRequestDetailDTO extends RequestDetailDTO {
     @NotNull(message = "Start date is required")
     @FutureOrPresent(message = "Start date cannot be in the past")
     private LocalDate startDate;

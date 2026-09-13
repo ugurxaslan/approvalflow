@@ -3,7 +3,6 @@ package com.ugurxaslan.approvalflow.model.dto.shared;
 import com.fasterxml.jackson.annotation.JsonSubTypes;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import com.ugurxaslan.approvalflow.model.enums.RequestType;
-import jakarta.validation.constraints.NotNull;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -19,4 +18,4 @@ import lombok.Setter;
 })
 @Getter
 @Setter
-public abstract class BaseRequestDetailDTO {}
+public abstract class RequestDetailDTO {}

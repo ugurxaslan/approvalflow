@@ -1,6 +1,6 @@
 package com.ugurxaslan.approvalflow.model.dto.request;
 
-import com.ugurxaslan.approvalflow.model.dto.shared.BaseRequestDetailDTO;
+import com.ugurxaslan.approvalflow.model.dto.shared.RequestDetailDTO;
 import com.ugurxaslan.approvalflow.model.enums.RequestType;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -21,5 +21,5 @@ public class RequestDTO {
     private String description;
 
     @Valid
-    private BaseRequestDetailDTO detail;
+    private RequestDetailDTO detail;
 }
