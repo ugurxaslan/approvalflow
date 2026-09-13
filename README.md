@@ -46,11 +46,12 @@ Tüm Enum tanımları veritabanında `@Enumerated(EnumType.STRING)` olarak sakla
     * **`departmentType` (`@Enumerated(EnumType.STRING)`):** Departman türünü tip güvenli şekilde tutar.
 
 ### `Request` Entity
-* **Barındırdığı Alanlar:** `requestType`, `status`, `title`, `description`, `requester`, `approvalSteps`
+* **Barındırdığı Alanlar:** `requestType`, `status`, `title`, `description`, `requestedBy`, `approvalSteps`,`detail`
 * **JPA İlişkileri ve Gerekçeleri:**
     * **`requested_by` (`@ManyToOne`):** Talebi oluşturan kullanıcıyı bağlar (`requester_id` foreign key).
     * **`approvalSteps` (`@OneToMany`):** Talebe bağlı onay adımlarını sıralı tutar.
-* **Tasarım Gerekçesi:** Onay akışı `Request` içerisine sabit kolonlarla (`managerApproved`, `hrApproved` vb.) gömülmemiş, `@OneToMany` ilişkisiyle `ApprovalStep` yapısına devredilerek dinamik hale getirilmiştir. `@OrderBy("stepOrder ASC")` kullanılarak adımların sırayla gelmesi sağlanmıştır. Katı iş kuralları (örn: izin gün sınırları) Entity'ye yazılmayıp Service/Policy katmanına bırakılmıştır.
+    * **`detail` (`@OneToOne`):** Talebin detaylarını 1-1 ilişkili olarak ayrı tabloda saklar.
+* **Tasarım Gerekçesi:** Onay akışı `Request` içerisine sabit kolonlarla (`managerApproved`, `hrApproved` vb.) gömülmemiş, `@OneToMany` ilişkisiyle `ApprovalStep` yapısına devredilerek dinamik hale getirilmiştir. `@OrderBy("stepOrder ASC")` kullanılarak adımların sırayla gelmesi sağlanmıştır. Katı iş kuralları (örn: izin gün sınırları) Entity'ye yazılmayıp Service/Policy katmanına bırakılmıştır.Detail abstract classtan extend edilen detail objeleri içerebilir. Zorunlu bir alan değildir.
 
 ### `ApprovalStep` Entity
 * **Barındırdığı Alanlar:** `stepOrder`, `comment`, `actionDate`, `status`, `requiredRole`, `request`, `assignedApprover`
@@ -60,6 +61,25 @@ Tüm Enum tanımları veritabanında `@Enumerated(EnumType.STRING)` olarak sakla
     * **`assignedApprover` (`@ManyToOne`):** Atanmış onaycı gösterilir.
     * **`request` (`@ManyToOne`):** Adımın bağlı olduğu ana talebi temsil eder (`request_id` foreign key).
 * **Tasarım Gerekçesi:** Sürecin kaç adımdan oluşacağını, hangi sırayla (`stepOrder`) ilerleyeceğini ve kimlerin onay yetkisine sahip olduğunu dinamik olarak yönetmeyi sağlar. 
+
+### `RequestDetail` Entity
+* **Barındırdığı Alanlar:** `request`
+* **JPA İlişkileri ve Gerekçeleri:**
+    * **`@Inheritance(strategy = InheritanceType.TABLE_PER_CLASS)`:** Her somut alt sınıf için veritabanında ayrı bir tablo oluşturulmasını sağlar. Polimorfik sorguları desteklerken soyut sınıf için boş bir üst tablo oluşmasını engeller.
+    * **`request` (`@OneToOne` + `@MapsId`):** `Request` ana tablosu ile birebir ilişki kurar. `@MapsId` sayesinde kendi Primary Key değerini üretmek yerine bağlı olduğu `Request` nesnesinin `id` değerini hem PK hem FK (`request_id`) olarak kullanır. `nullable = false` ile ilişkisiz detay kaydı oluşması engellenir.
+* **Tasarım Gerekçesi:** Farklı talep türlerinin ortak davranışlarını tek bir üst çatı altında toplar. Sistemdeki onay mantığını veri yapısından ayırarak yeni talep tiplerinin modüler bir şekilde sisteme eklenmesine olanak tanır.
+
+### `LeaveRequestDetail` Entity
+* **Barındırdığı Alanlar:** `startDate`, `endDate`, `request` *(RequestDetail'den türetilen)*
+* **JPA İlişkileri ve Gerekçeleri:**
+    * **`startDate` / `endDate` (`@Column(nullable = false)`):** İznin başlangıç ve bitiş tarihlerini tutar.
+* **Tasarım Gerekçesi:** İzin süreçlerine özel tarih bilgilerini ana `Request` tablosunu kirletmeden kendi bünyesinde izole eder. `RequestDetail` sınıfını genişleterek polimorfik onay mimarisine doğrudan dahil olur.
+
+### `SalaryAdvanceRequestDetail` Entity
+* **Barındırdığı Alanlar:** `amount`, `reason`, `request` *(RequestDetail'den türetilen)*
+* **JPA İlişkileri ve Gerekçeleri:**
+    * **`amount` (`@Column(nullable = false)`):** Talep edilen avans tutarını tutar.
+* **Tasarım Gerekçesi:** Finansal taleplere özgü verileri kapsapsüller (encapsulation). 
 
 ### Polimorfik Request DTO Mimarisi
 

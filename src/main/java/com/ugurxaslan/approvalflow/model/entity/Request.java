@@ -39,19 +39,17 @@ public class Request extends BaseEntity {
 
     @OneToMany(
             mappedBy = "request",
-            cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+            cascade = CascadeType.ALL)
     @OrderBy("stepOrder ASC")
     @Builder.Default
     private List<ApprovalStep> approvalSteps = new ArrayList<>();
 
-    @OneToOne(mappedBy = "request", cascade = CascadeType.ALL, fetch = FetchType.LAZY, optional = false)
+    @OneToOne(
+            mappedBy = "request",
+            cascade = CascadeType.ALL,
+            orphanRemoval = true,
+            fetch = FetchType.LAZY,
+            optional = true)
     private RequestDetail detail;
-
-    public void setRequestDetail(RequestDetail detail) {
-        this.detail = detail;
-        if (detail != null) {
-            detail.setRequest(this);
-        }
-    }
 
 }
