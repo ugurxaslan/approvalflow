@@ -1,12 +1,15 @@
-# Approval Flow 
+# Approval Flow - Dinamik Talep ve Onay Yönetim Sistemi
 
----
+## Proje Hakkında ve Amaç
 
-## Domain Model & Architecture
+Bu proje, gerçek hayat iş senaryolarına dayalı **"Dinamik Talep ve Onay Yönetim Sistemi"** gereksinimlerini karşılamak üzere geliştirilmiştir. Projenin temel amacı, sadece CRUD (Create, Read, Update, Delete) operasyonları gerçekleştiren statik bir uygulama yazmak değil; bir kurum içerisindeki farklı talep türlerini, bu türlere özel onay kurallarını ve dinamik onay süreçlerini uçtan uca yönetebilen, genişletilebilir ve kurumsal standartlara uygun bir mimari kurmaktır.
 
-Bu bölüm, projedeki Enum tanımlarını, Entity sınıflarını, aralarındaki JPA ilişkilerini ve bu mimari kararların teknik gerekçelerini açıklamaktadır.
+### Projenin Odak Noktaları ve Kapsamı
 
----
+* **Dinamik İş Akışı ve Polimorfizm:** İzin, avans, yazılım lisansı ve teknik destek gibi farklı veri yapılarına ve iş kurallarına sahip talep türlerinin, mevcut sistemi bozmadan (`Open/Closed Principle`) sisteme modüler bir şekilde eklenebileceği esnek bir mimari sunmak.
+* **Katmanlı Mimari ve SOLID Prensipleri:** Controller, Service, Repository, Policy ve Mapper katmanlarının sorumluluklarını net bir şekilde ayırarak; iş kurallarını tek bir sınıfa yığmadan interface ve strateji kalıpları (Strategy Pattern) üzerinden yönetmek.
+* **Gelişmiş DTO ve Entity Yönetimi:** İstemci ile iletişimde DTO ve Jakarta Validation yapılarını kullanarak güvenli veri transferi sağlamak; veritabanı seviyesinde ise JPA/Hibernate ve MapStruct ile polimorfik nesne haritalamasını gerçekleştirmek.
+* **Süreç ve Geçmiş Takibi:** Taleplerin taslak aşamasından (`DRAFT`) onaylanma (`APPROVED`) veya reddedilme (`REJECTED`) aşamasına kadar olan tüm mikro onay adımlarını (`ApprovalStep`), atanan kişileri, rol yetkilerini ve işlem açıklamalarını kayıt altına almak.
 
 ## 1. Enum Yapıları ve Tasarım Gerekçeleri
 
@@ -81,7 +84,9 @@ Tüm Enum tanımları veritabanında `@Enumerated(EnumType.STRING)` olarak sakla
     * **`amount` (`@Column(nullable = false)`):** Talep edilen avans tutarını tutar.
 * **Tasarım Gerekçesi:** Finansal taleplere özgü verileri kapsapsüller (encapsulation). 
 
-### Polimorfik Request DTO Mimarisi
+---
+## 3. Polimorfik Request DTO Mimarisi
+
 
 Uygulama, Jackson tabanlı polimorfik ayrıştırma (deserialization) mekanizması sayesinde farklı onay talebi türlerini tek bir ortak endpoint üzerinden dinamik olarak karşılar. Ana DTO yapısı (`RequestDTO`) üst seviye alanları tutarken, talebe özel detay verileri `BaseRequestDetailDTO` soyut sınıfı üzerinden polimorfik olarak kapsüllenir.
 
@@ -111,3 +116,41 @@ Uygulama, Jackson tabanlı polimorfik ayrıştırma (deserialization) mekanizmas
     "endDate": "2026-07-20"
   }
 }
+```
+
+---
+
+## 4. Mapper Katmanı (MapStruct Mimarisi)
+
+Uygulamanın DTO (`RequestDTO`, `RequestResponseDTO`, `RequestDetailDTO`) ve Entity (`Request`, `RequestDetail`) katmanları arasındaki veri dönüşümleri, derleme anında (compile-time) tip güvenli kod üreten **MapStruct** kütüphanesi ile yönetilmektedir.
+
+Mapper arayüzleri, Spring Dependency Injection (DI) mimarisine tam uyum sağlamak amacıyla `@Mapper(componentModel = "spring")` olarak yapılandırılmıştır.
+
+### Mapper Bileşenleri ve Sorumlulukları
+
+#### `RequestDetailMapper`
+* **Sorumluluk:** Polimorfik detay verilerinin (`RequestDetail` alt sınıfları) DTO ve Entity katmanları arasında çift yönlü dönüşümünü sağlar.
+* **Teknik Detay:** MapStruct'ın `@SubclassMappings` ve `@SubclassMapping` anotasyonlarını kullanarak runtime esnasında ilgili nesnenin somut tipine (`LeaveRequestDetail` veya `SalaryAdvanceRequestDetail`) göre doğru mapper metodunu tetikler. Jackson tarafındaki `@JsonSubTypes` eşlemesinin Service ve Entity katmanındaki tam karşılığıdır.
+
+#### `ApprovalStepMapper`
+* **Sorumluluk:** Talebe bağlı onay adımlarının (`ApprovalStep`) istemciye sunulacak yanıt modeline (`ApprovalStepResponseDTO`) dönüştürülmesini sağlar.
+* **Teknik Detay:** Entity üzerindeki `assignedApprover` (`User`) nesnesinin `id` değerini `assignedApproverId` alanına düzleştirerek (flattening) aktarır. Ayrıca `List<ApprovalStep>` koleksiyonlarını `List<ApprovalStepResponseDTO>` yapısına tekil metodu yeniden kullanarak (reusable) dönüştürür.
+
+#### `RequestMapper` (Ana Mapper)
+* **Sorumluluk:** Ana talep nesnesinin (`Request`) `RequestDTO` ve `RequestResponseDTO` dönüşümlerini orkestre eden köprü bileşendir.
+* **Teknik Detay:**
+    * `uses = {RequestDetailMapper.class, ApprovalStepMapper.class}` parametresi ile alt mapper'ları bünyesine dahil eder.
+    * **DTO -> Entity (`toEntity`):** `id`, `status`, `requestedBy` ve `approvalSteps` gibi iş mantığı / Service katmanında set edilecek alanları `@Mapping(target = "...", ignore = true)` ile es geçer. DTO üzerindeki `detail` alanını Entity'deki `requestDetail` alanına bağlar.
+    * **Entity -> ResponseDTO (`toResponseDto`):** Sub-mapper'ları tetikleyerek hem polimorfik detay yapısının hem de onay adımları listesinin kayıpsız bir şekilde yanıt DTO'suna aktarılmasını sağlar.
+
+---
+
+### Mapper Eşleşme Matrisi
+
+| Kaynak Nesne (Source) | Hedef Nesne (Target) | Sorumlu Mapper | Özel Dönüşüm / Mantık                                                          |
+| :--- | :--- | :--- |:-------------------------------------------------------------------------------|
+| `RequestDTO` | `Request` | `RequestMapper` | Business alanları `ignore` edilir.                                             |
+| `Request` | `RequestResponseDTO` | `RequestMapper` | `requestedBy.id` -> `requestedBy` düzleştirilir, alt mapper'lar tetiklenir.    |
+| `RequestDetail` *(Abstract)* | `RequestDetailDTO` *(Abstract)* | `RequestDetailMapper` | `@SubclassMapping` ile somut sınıfa (`Leave` / `SalaryAdvance`) yönlendirilir. |
+| `ApprovalStep` | `ApprovalStepResponseDTO` | `ApprovalStepMapper` | `assignedApprover.id` -> `assignedApproverId` dönüşümü yapılır.                |
+| `List<ApprovalStep>` | `List<ApprovalStepResponseDTO>` | `ApprovalStepMapper` | Koleksiyon elemanları tekil `toDto` çağrısı ile dönüştürülür.                  |
