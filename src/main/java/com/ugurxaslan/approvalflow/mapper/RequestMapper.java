@@ -3,10 +3,13 @@ package com.ugurxaslan.approvalflow.mapper;
 import com.ugurxaslan.approvalflow.model.dto.request.RequestDTO;
 import com.ugurxaslan.approvalflow.model.dto.response.RequestResponseDTO;
 import com.ugurxaslan.approvalflow.model.entity.Request;
+import org.mapstruct.Builder;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
-@Mapper(componentModel = "spring",uses = {RequestDetailMapper.class, ApprovalStepMapper.class})
+@Mapper(componentModel = "spring",
+        uses = {RequestDetailMapper.class, ApprovalStepMapper.class},
+        builder = @Builder(disableBuilder = true))
 public interface RequestMapper {
 
     @Mapping(target = "id", ignore = true)
